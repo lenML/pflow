@@ -1,18 +1,41 @@
-# pflow
+import { Node, Flow, Shared, Action } from "../src";
+import readline from "readline";
 
-enhancement pocket-flow
+async function get_llm_completions(
+  messages: { role: string; content: string }[],
+  params = {} as any
+) {
+  const resp = await fetch(
+    `${process.env.OPENAI_API_BASE_URL}/chat/completions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages,
+        ...params,
+      }),
+    }
+  );
+  return resp.json();
+}
 
-## features
+function prompt(query: string) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-- typing safety
-- Practical Experience
-
-# usage
-
-```ts
-import { Node, Flow, Shared, Action } from "@lenml/pflow";
-
-// ... some utils
+  return new Promise<string>((resolve) => {
+    rl.question(query, function (answer) {
+      resolve(answer);
+      rl.close();
+    });
+  });
+}
 
 interface Message {
   role: string;
@@ -33,7 +56,7 @@ class ChatNode extends Node<Shared<{ messages: Messages }>> {
     return messages;
   }
 
-  async exec(prepRes: Messages | null): Promise<unknown> {
+  async exec(prepRes: Messages | null): Promise<string | null> {
     if (prepRes === null) return null;
 
     const resp = await get_llm_completions(prepRes);
@@ -43,7 +66,7 @@ class ChatNode extends Node<Shared<{ messages: Messages }>> {
 
   async post(
     prepRes: Messages | null,
-    execRes: string
+    execRes: string | null
   ): Promise<Action | undefined> {
     if (prepRes === null || execRes === null) {
       console.log("\nGoodbye!");
@@ -67,4 +90,3 @@ const chat_flow = new Flow(chat_node);
 
 chat_flow.setShared(shared);
 chat_flow.run();
-```
