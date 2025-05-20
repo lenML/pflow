@@ -1,4 +1,5 @@
 import { IShared } from "./types";
+import { uuid } from "./utils";
 
 // Helper type for LogLevel
 type LogLevel = "debug" | "info" | "warn" | "error";
@@ -9,6 +10,8 @@ type Listener<T extends unknown[] = any[]> = (
 ) => void | Promise<void>;
 
 export class Shared<Data = unknown> implements IShared<Data> {
+  public readonly id = uuid();
+
   /**
    * Application-specific shared data.
    */

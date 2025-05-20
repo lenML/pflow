@@ -1,5 +1,6 @@
-import { Node, Flow, Shared, Action } from "../src";
+import { Node, Flow, Shared, Action, Inspector } from "../src";
 import readline from "readline";
+import fs from "fs";
 
 async function get_llm_completions(
   messages: { role: string; content: string }[],
@@ -46,6 +47,7 @@ type Messages = Message[];
 class ChatNode extends Node<Shared<{ messages: Messages }>> {
   async prep(): Promise<Messages | null> {
     const { messages } = this._shared.data;
+
     const user_input = await prompt("User: ");
 
     if (user_input === "exit") {
@@ -87,6 +89,16 @@ const shared = new Shared<{
 const chat_node = new ChatNode();
 chat_node.on("continue", chat_node);
 const chat_flow = new Flow(chat_node);
-
-chat_flow.setShared(shared);
-chat_flow.run();
+const inspector = new Inspector(shared);
+inspector
+  .collect(chat_flow, async () => {
+    chat_flow.setShared(shared);
+    await chat_flow.run();
+  })
+  .then((events) => {
+    fs.writeFileSync(
+      "inspector-events.json",
+      JSON.stringify(events, null, 2),
+      "utf-8"
+    );
+  });

@@ -292,7 +292,8 @@ class Flow<
     const pr = await this.prep(); // Run Flow's prep method.
     await this._orchestrate(); // Orchestrate the internal nodes.
     // Run Flow's post method. `execRes` is undefined as Flow doesn't have a conventional exec result.
-    return await this.post(pr, undefined);
+    const a = await this.post(pr, undefined);
+    return a;
   }
 
   /**
@@ -343,7 +344,8 @@ class BatchFlow<
       await this._orchestrate(mergedParams); // Orchestrate the flow with merged params.
     }
     // Run BatchFlow's post method. `execRes` is undefined.
-    return await this.post(batchParams, undefined);
+    const a = await this.post(batchParams, undefined);
+    return a;
   }
 
   /**
@@ -401,7 +403,8 @@ class ParallelBatchFlow<
     );
 
     // Run ParallelBatchFlow's post method. `execRes` is undefined.
-    return await this.post(batchParams, undefined);
+    const a = await this.post(batchParams, undefined);
+    return a;
   }
 }
 

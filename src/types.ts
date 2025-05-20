@@ -18,6 +18,19 @@ export type Listener<T extends unknown[] = any[]> = (
   ...args: T
 ) => void | Promise<void>;
 
+export type Events =
+  | (string & {})
+  | "run_start"
+  | "run_end"
+  | "prep_start"
+  | "prep_result"
+  | "post_start"
+  | "post_result"
+  | "exec_start"
+  | "exec_result"
+  | "orchestrate_start"
+  | "orchestrate_end";
+
 /**
  * Interface for the Shared object passed between nodes in a flow.
  * It provides common utilities like logging, locking, cancellation, and event emission,
@@ -26,6 +39,8 @@ export type Listener<T extends unknown[] = any[]> = (
  * @template Data - The type of the application-specific data container.
  */
 export interface IShared<Data = unknown> {
+  id: string;
+
   /**
    * Application-specific shared data.
    */
@@ -98,11 +113,12 @@ export interface IShared<Data = unknown> {
    * Registers an event listener for a given event name.
    * @param eventName The name of the event.
    * @param listener The callback function to execute when the event is emitted.
+   * @returns A function to remove the listener.
    */
   on<Args extends unknown[] = any[]>(
-    eventName: string,
+    eventName: Events,
     listener: Listener<Args>
-  ): void;
+  ): () => void;
 
   /**
    * Removes an event listener for a given event name.
@@ -110,7 +126,7 @@ export interface IShared<Data = unknown> {
    * @param listener The callback function to remove.
    */
   off<Args extends unknown[] = any[]>(
-    eventName: string,
+    eventName: Events,
     listener: Listener<Args>
   ): void;
 
@@ -120,7 +136,7 @@ export interface IShared<Data = unknown> {
    * @param args Arguments to pass to the listeners.
    */
   emit<Args extends unknown[] = any[]>(
-    eventName: string,
+    eventName: Events,
     ...args: Args
   ): Promise<void>;
 

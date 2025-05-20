@@ -1,5 +1,6 @@
 import { Shared } from "./Shared";
 import { NonIterableObject, Action, IShared } from "./types";
+import { deepClone, uuid } from "./utils";
 
 /**
  * Base class for all nodes in the workflow.
@@ -20,6 +21,8 @@ export class BaseNode<
   PrepRes = unknown,
   ExecRes = unknown
 > {
+  public readonly id = uuid();
+
   /**
    * Parameters specific to this node instance.
    * These can be set using `setParams` and are often used by the `prep`, `exec`, or `post` methods.
@@ -107,7 +110,8 @@ export class BaseNode<
     // Execute prep, then exec, then post.
     const p = await this.prep();
     const e = await this._exec(p);
-    return await this.post(p, e);
+    const a = await this.post(p, e);
+    return a;
   }
 
   /**
@@ -208,6 +212,7 @@ export class BaseNode<
     // Deep copy params to avoid shared state issues between cloned nodes in a flow.
     clonedNode._params = { ...this._params };
     clonedNode._shared = this._shared;
+    clonedNode.id = uuid();
     // Create a new Map for successors, but references to successor nodes are shared.
     clonedNode._successors = new Map(this._successors);
     return clonedNode;

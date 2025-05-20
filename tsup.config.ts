@@ -1,12 +1,12 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/main.ts"],
+  entry: ["src/index.ts"],
   splitting: false,
   sourcemap: true,
   clean: true,
   format: ["cjs", "esm", "iife"],
-  globalName: "llmdx",
+  globalName: "pflow",
   // dts: true,
   experimentalDts: true,
 });
