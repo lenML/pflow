@@ -83,6 +83,10 @@ class ChatNode extends Node<Shared<{ messages: Messages }>> {
   }
 }
 
+// checking system variables
+if (!process.env.OPENAI_API_BASE_URL) {
+  throw new Error("OPENAI_API_BASE_URL is not set");
+}
 const shared = new Shared<{
   messages: Messages;
 }>({ messages: [] });

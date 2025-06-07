@@ -37,17 +37,59 @@ function getClassChain(obj: any) {
   return chain;
 }
 
+function toCopyable(o: any) {
+  // 判断是否是可以被json序列化的，普通类型或者普通对象，如果不是就用 contructor.name 替代
+  if (
+    typeof o === "string" ||
+    typeof o === "number" ||
+    typeof o === "boolean" ||
+    o === null ||
+    o === undefined ||
+    o instanceof String ||
+    o instanceof Number ||
+    o instanceof Boolean
+  ) {
+    return o;
+  }
+  if (o instanceof BigInt) {
+    return `bigint:${o.toString()}`;
+  }
+  if (o.constructor === Object) {
+    return Object.fromEntries(
+      Object.entries(o).map(([k, v]) => [k, toCopyable(v)])
+    );
+  }
+  if (Array.isArray(o)) {
+    return o.map((v) => toCopyable(v));
+  }
+  if (o instanceof Date) {
+    return `date:${o.toISOString()}`;
+  }
+  if (o instanceof RegExp) {
+    return `regexp:/${o.source}/${o.flags}`;
+  }
+  if (o instanceof Error) {
+    return {
+      name: o.name,
+      message: o.message,
+      stack: o.stack,
+    };
+  }
+  return `<Class ${o.constructor.name}>`;
+}
+
 function snapshot(node: BaseNode, data = null as any) {
   return deepClone({
     classes: getClassChain(node),
     id: node.id,
     // @ts-ignore
-    params: node._params,
+    params: toCopyable(node._params),
     // @ts-ignore
     shared_id: node._shared.id,
     // @ts-ignore
-    shared: node._shared.data,
+    shared: toCopyable(node._shared.data),
     data,
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -107,7 +149,7 @@ export class Inspector {
       return execRes;
     };
     node.post = async function (prepRes, execRes) {
-      shared.emit("post_start", snapshot(this, execRes));
+      shared.emit("post_start", snapshot(this, { prepRes, execRes }));
       const postRes = await o_post.call(this, prepRes, execRes);
       shared.emit("post_result", snapshot(this, postRes));
       return postRes;
